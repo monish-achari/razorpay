@@ -42,26 +42,30 @@ class MyPayment(View):
     def post(self,request):
         template = 'success.html'
         # import ipdb;ipdb.set_trace()
-        payment_id = request.POST.get('razorpay_payment_id')
-        reference_obj = request.POST.get('shopping_order_id')
-        reference_obj_amount = request.POST.get('shopping_order_amount')
-        real_obj = PaymentDetails.objects.get(uuid=reference_obj)
-        if int(real_obj.amount) == int(reference_obj_amount):
-            url = 'https://api.razorpay.com/v1/payments/%s/capture' % str(payment_id)
-            resp = requests.post(url, data={'amount':int(real_obj.amount)*100}, auth=(key, secret))
-            if resp.status_code == 200:
-                data = {"body": request.body, "contetn": resp.text}
-                RazorpayResponsew.objects.create(response=data,status=2,relation_id=int(real_obj.id))
-                response = "Success"
-            elif resp.status_code == 400:
-                data = {"body": request.body, "contetn": resp.text}
-                RazorpayResponsew.objects.create(response=data,status=0,relation_id=int(real_obj.id))
-                response = "Hmm Failed we will verify shortly"
-                # send_mail()
+        try:
+            payment_id = request.POST.get('razorpay_payment_id')
+            reference_obj = request.POST.get('shopping_order_id')
+            reference_obj_amount = request.POST.get('shopping_order_amount')
+            real_obj = PaymentDetails.objects.get(uuid=reference_obj)
+            if int(real_obj.amount) == int(reference_obj_amount):
+                url = 'https://api.razorpay.com/v1/payments/%s/capture' % str(payment_id)
+                resp = requests.post(url, data={'amount':int(real_obj.amount)*100}, auth=(key, secret))
+                if resp.status_code == 200:
+                    data = {"body": request.body, "contetn": resp.text}
+                    RazorpayResponsew.objects.create(response=data,status=2,relation_id=int(real_obj.id))
+                    response = "Success"
+                elif resp.status_code == 400:
+                    data = {"body": request.body, "contetn": resp.text}
+                    RazorpayResponsew.objects.create(response=data,status=0,relation_id=int(real_obj.id))
+                    response = "Hmm Failed we will verify shortly"
+                    # send_mail()
+                else:
+                    data = {"body": request.body, "contetn": resp.text}
+                    RazorpayResponsew.objects.create(response=data,status=1,relation_id=int(real_obj.id))
+                    response = "Hmm Failed we will verify shortly"
             else:
-                data = {"body": request.body, "contetn": resp.text}
-                RazorpayResponsew.objects.create(response=data,status=1,relation_id=int(real_obj.id))
-                response = "Hmm Failed we will verify shortly"
-        else:
-            response = "This activity logged"
+                response = "This activity logged"
+        except Exception as e:
+            # send_mail(e.message + pg views)
+            response = "OOPS.......... Failed"
         return render(request,template,locals())
