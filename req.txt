@@ -1,0 +1,4 @@
+# Python 3.6.8
+# requests==2.22.0
+# admin admin (superuser credentials)
+Django==2.2
